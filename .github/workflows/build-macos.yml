@@ -37,7 +37,7 @@ jobs:
         run: npm install --legacy-peer-deps
 
       - name: Disable Updater Signing
-        run: node -e "const fs = require('fs'); const file = 'src-tauri/tauri.conf.json'; const data = JSON.parse(fs.readFileSync(file)); if (data.plugins && data.plugins.updater) delete data.plugins.updater.pubkey; fs.writeFileSync(file, JSON.stringify(data, null, 2));"
+        run: node -e "const fs = require('fs'); const file = 'src-tauri/tauri.conf.json'; const data = JSON.parse(fs.readFileSync(file)); if (data.plugins && data.plugins.updater) { delete data.plugins.updater; } if (data.bundle) { data.bundle.createUpdaterArtifacts = false; } fs.writeFileSync(file, JSON.stringify(data, null, 2));"
 
       - name: Build Tauri App (macOS aarch64)
         run: npm run tauri build -- --target aarch64-apple-darwin

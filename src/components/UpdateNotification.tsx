@@ -1,11 +1,10 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { X, Sparkles, Loader2, CheckCircle, RotateCcw } from 'lucide-react';
-import { request as invoke } from '../utils/request';
-import { useTranslation } from 'react-i18next';
-import { check as tauriCheck } from '@tauri-apps/plugin-updater';
-import { relaunch as tauriRelaunch } from '@tauri-apps/plugin-process';
-import { isTauri } from '../utils/env';
-import { showToast } from './common/ToastContainer';
+import React, { useEffect, useState, useRef } from "react";
+import { X, Sparkles, Loader2, CheckCircle, RotateCcw } from "lucide-react";
+import { request as invoke } from "../utils/request";
+import { useTranslation } from "react-i18next";
+import { relaunch as tauriRelaunch } from "@tauri-apps/plugin-process";
+import { isTauri } from "../utils/env";
+import { showToast } from "./common/ToastContainer";
 
 interface UpdateInfo {
   has_update: boolean;
@@ -15,18 +14,20 @@ interface UpdateInfo {
   source?: string;
 }
 
-type UpdateState = 'checking' | 'downloading' | 'ready' | 'error' | 'none';
+type UpdateState = "checking" | "downloading" | "ready" | "error" | "none";
 
 interface UpdateNotificationProps {
   onClose: () => void;
 }
 
-export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose }) => {
+export const UpdateNotification: React.FC<UpdateNotificationProps> = ({
+  onClose,
+}) => {
   const { t } = useTranslation();
   const [updateInfo, setUpdateInfo] = useState<UpdateInfo | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [isClosing, setIsClosing] = useState(false);
-  const [updateState, setUpdateState] = useState<UpdateState>('checking');
+  const [updateState, setUpdateState] = useState<UpdateState>("checking");
   const [downloadProgress, setDownloadProgress] = useState(0);
   const downloadStarted = useRef(false);
 
@@ -37,7 +38,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
   const checkAndDownload = async () => {
     try {
       // 1. Check for updates via backend
-      const info = await invoke<UpdateInfo>('check_for_updates');
+      const info = await invoke<UpdateInfo>("check_for_updates");
       if (!info.has_update) {
         onClose();
         return;
@@ -47,7 +48,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
 
       // 2. If not in Tauri — no auto-update possible
       if (!isTauri()) {
-        console.warn('Auto update is only available in Tauri environment');
+        console.warn("Auto update is only available in Tauri environment");
         onClose();
         return;
       }
@@ -56,45 +57,32 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
       if (downloadStarted.current) return;
       downloadStarted.current = true;
 
-      setUpdateState('downloading');
+      setUpdateState("downloading");
       setTimeout(() => setIsVisible(true), 100);
 
-      const update = await tauriCheck();
+      const update = null; // updater removed by user request
       if (!update) {
         // updater.json not ready yet or no update via native channel
-        console.warn('Native updater returned null');
-        showToast(t('update_notification.toast.not_ready'), 'info');
+        console.warn("Native updater disabled or returned null");
+        showToast(
+          t("update_notification.toast.not_ready") || "Auto-update is disabled",
+          "info",
+        );
         handleClose();
         return;
       }
 
-      let downloaded = 0;
-      let contentLength = 0;
-
-      await update.downloadAndInstall((event) => {
-        switch (event.event) {
-          case 'Started':
-            contentLength = event.data.contentLength || 0;
-            break;
-          case 'Progress':
-            downloaded += event.data.chunkLength;
-            if (contentLength > 0) {
-              setDownloadProgress(Math.round((downloaded / contentLength) * 100));
-            }
-            break;
-          case 'Finished':
-            break;
-        }
-      });
-
       // 4. Download complete — show restart prompt
-      setUpdateState('ready');
+      setUpdateState("ready");
       setDownloadProgress(100);
     } catch (error) {
       const errorMsg = error instanceof Error ? error.message : String(error);
-      console.error('Auto update failed:', errorMsg);
-      setUpdateState('error');
-      showToast(`${t('update_notification.toast.failed')}: ${errorMsg}`, 'error');
+      console.error("Auto update failed:", errorMsg);
+      setUpdateState("error");
+      showToast(
+        `${t("update_notification.toast.failed")}: ${errorMsg}`,
+        "error",
+      );
     }
   };
 
@@ -102,7 +90,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
     try {
       await tauriRelaunch();
     } catch (error) {
-      console.error('Relaunch failed:', error);
+      console.error("Relaunch failed:", error);
     }
   };
 
@@ -112,7 +100,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
     setTimeout(onClose, 400);
   };
 
-  if (updateState === 'none') {
+  if (updateState === "none") {
     return null;
   }
 
@@ -121,10 +109,11 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
       className={`
         fixed top-6 right-6 z-[100]
         transition-all duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)]
-        ${isVisible && !isClosing ? 'translate-y-0 opacity-100 scale-100' : '-translate-y-4 opacity-0 scale-95'}
+        ${isVisible && !isClosing ? "translate-y-0 opacity-100 scale-100" : "-translate-y-4 opacity-0 scale-95"}
       `}
     >
-      <div className="
+      <div
+        className="
         relative overflow-hidden
         w-80 p-5
         rounded-2xl
@@ -133,7 +122,8 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
         backdrop-blur-xl
         bg-white/70 dark:bg-slate-900/60
         group
-      ">
+      "
+      >
         <div className="absolute -top-10 -right-10 w-32 h-32 bg-blue-500/20 rounded-full blur-3xl pointer-events-none group-hover:bg-blue-500/30 transition-colors duration-500" />
         <div className="absolute -bottom-10 -left-10 w-32 h-32 bg-purple-500/20 rounded-full blur-3xl pointer-events-none group-hover:bg-purple-500/30 transition-colors duration-500" />
 
@@ -141,7 +131,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
           <div className="flex items-start justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="p-1.5 rounded-lg bg-gradient-to-br from-blue-500 to-purple-600 shadow-sm">
-                {updateState === 'ready' ? (
+                {updateState === "ready" ? (
                   <CheckCircle className="w-4 h-4 text-white" />
                 ) : (
                   <Sparkles className="w-4 h-4 text-white" />
@@ -149,9 +139,9 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
               </div>
               <div>
                 <h3 className="font-bold text-gray-800 dark:text-white leading-tight">
-                  {updateState === 'ready'
-                    ? t('update_notification.ready')
-                    : t('update_notification.title')}
+                  {updateState === "ready"
+                    ? t("update_notification.ready")
+                    : t("update_notification.title")}
                 </h3>
                 {updateInfo && (
                   <p className="text-xs font-medium text-blue-600 dark:text-blue-400">
@@ -161,7 +151,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
               </div>
             </div>
 
-            {(updateState === 'error' || updateState === 'ready') && (
+            {(updateState === "error" || updateState === "ready") && (
               <button
                 onClick={handleClose}
                 className="
@@ -170,7 +160,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
                   hover:bg-black/5 dark:hover:bg-white/10
                   transition-all duration-200
                 "
-                aria-label={t('common.cancel')}
+                aria-label={t("common.cancel")}
               >
                 <X className="w-4 h-4" />
               </button>
@@ -180,14 +170,17 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
           {/* Status message */}
           <div className="mb-4">
             <p className="text-sm text-gray-600 dark:text-gray-300 leading-relaxed">
-              {updateState === 'downloading' && t('update_notification.downloading')}
-              {updateState === 'ready' && t('update_notification.restart_prompt')}
-              {updateState === 'error' && `${t('update_notification.toast.failed')}`}
+              {updateState === "downloading" &&
+                t("update_notification.downloading")}
+              {updateState === "ready" &&
+                t("update_notification.restart_prompt")}
+              {updateState === "error" &&
+                `${t("update_notification.toast.failed")}`}
             </p>
           </div>
 
           {/* Progress bar during download */}
-          {updateState === 'downloading' && (
+          {updateState === "downloading" && (
             <div className="mb-4">
               <div className="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
                 <div
@@ -203,7 +196,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
           )}
 
           {/* Restart button when ready */}
-          {updateState === 'ready' && (
+          {updateState === "ready" && (
             <div className="flex gap-2">
               <button
                 onClick={handleRestart}
@@ -220,7 +213,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
                 "
               >
                 <RotateCcw className="w-4 h-4" />
-                <span>{t('update_notification.btn_restart')}</span>
+                <span>{t("update_notification.btn_restart")}</span>
                 <div className="absolute inset-0 -translate-x-full group-hover/btn:animate-[shimmer_1.5s_infinite] bg-gradient-to-r from-transparent via-white/20 to-transparent z-20 pointer-events-none" />
               </button>
               <button
@@ -233,17 +226,17 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
                   text-sm font-medium
                 "
               >
-                {t('update_notification.btn_later')}
+                {t("update_notification.btn_later")}
               </button>
             </div>
           )}
 
           {/* Error state — retry button */}
-          {updateState === 'error' && (
+          {updateState === "error" && (
             <button
               onClick={() => {
                 downloadStarted.current = false;
-                setUpdateState('checking');
+                setUpdateState("checking");
                 setDownloadProgress(0);
                 checkAndDownload();
               }}
@@ -259,7 +252,7 @@ export const UpdateNotification: React.FC<UpdateNotificationProps> = ({ onClose 
               "
             >
               <RotateCcw className="w-4 h-4" />
-              <span>{t('common.retry')}</span>
+              <span>{t("common.retry")}</span>
             </button>
           )}
         </div>

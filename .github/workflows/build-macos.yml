@@ -36,22 +36,7 @@ jobs:
       - name: Install dependencies
         run: npm install --legacy-peer-deps
 
-      - name: Inject Dummy Updater Configuration
-        run: |
-          node -e "
-            const fs = require('fs'); 
-            const file = 'src-tauri/tauri.conf.json'; 
-            const data = JSON.parse(fs.readFileSync(file)); 
-            if (data.plugins && data.plugins.updater) { 
-              data.plugins.updater.pubkey = 'dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEE3QTA1OEJBMUIzQTYxM0QKUldROVlUb2J1bGlncDJOOG9Jd2JhSHhaWStGNzFJaFA1QVFzUUFoVHF6a1d0VE1sc0h5TklIalYK'; 
-            } 
-            fs.writeFileSync(file, JSON.stringify(data, null, 2));
-          "
-
       - name: Build Tauri App (macOS aarch64)
-        env:
-          TAURI_SIGNING_PRIVATE_KEY: "dW50cnVzdGVkIGNvbW1lbnQ6IHJzaWduIGVuY3J5cHRlZCBzZWNyZXQga2V5ClJXUlRZMEl5WXp4WDg2THNoYnQxb1paNWRUZDlid3VlWnhNN1NOelZVL0lPYjZZR0V3Y0FBQkFBQUFBQUFBQUFBQUlBQUFBQVR4bmcySy9OM013eEdOamViYnNBQ1o2NmhyRVBFNGRrUSsxc3RldWJQc2M2RWVCc3MvcUZRN0dYamRTZFVSdDlpR001UkVmREJ0Z0p3TUkydk5Ec3prc0FtM3BYSXUxc0J4S2lRd3V1SFFIdTZKRjNjYi9hZittcVlKQU54TUlRcDZ0Zmg5RFAxT1E9Cg=="
-          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: "082102"
         run: npm run tauri build -- --target aarch64-apple-darwin
 
       - name: Upload DMG Artifact
